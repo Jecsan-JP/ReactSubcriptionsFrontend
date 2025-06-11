@@ -1,17 +1,16 @@
 import axios, { AxiosError } from "axios";
 import type { AxiosInstance, AxiosResponse } from "axios";
 import {
-  BaseResponseDto,
-  DeleteRequestConfig,
-  GetRequestConfig,
   HttpError,
-  HttpInterceptor,
-  HttpManager,
-  PostRequestConfig,
-  PutRequestConfig,
+  type BaseResponseDto,
+  type DeleteRequestConfig,
+  type GetRequestConfig,
+  type HttpInterceptor,
+  type HttpManager,
+  type PostRequestConfig,
+  type PutRequestConfig,
 } from "./HttpManager";
-import { debugPrint } from "../domain/constants/debugPrint";
-import { authDatapool } from "@/features/app/domain/datapool/AuthDatapool";
+import { debugPrint } from "../utils/debugPrint";
 
 class HttpAxiosManager implements HttpManager {
   private axiosInstance: AxiosInstance;
@@ -109,10 +108,10 @@ class HttpAxiosManager implements HttpManager {
       })
       .catch((error) => {
         if (error instanceof AxiosError) {
-          if (error.response?.status === 401) {
-            this.setToken(undefined);
-            authDatapool.setValue(false);
-          }
+          // if (error.response?.status === 401) {
+          //   this.setToken(undefined);
+          //   authDatapool.setValue(false);
+          // }
           const statusCode = error.response?.data?.headers?.code ?? 500;
           const message =
             error.response?.data?.headers?.message ?? error.message;
