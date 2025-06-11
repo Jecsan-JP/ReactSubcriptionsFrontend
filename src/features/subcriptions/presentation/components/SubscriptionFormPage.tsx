@@ -1,27 +1,56 @@
-import { createCheckoutSessionUseCase } from "../di/container";
+import { useState } from "react";
+import {
+  createCheckoutSessionUseCase,
+  getSubcriptionStatusUseCase,
+  getUserByEmailUseCase,
+} from "../di/container";
 import {
   useSubscriptionForm,
   type SubscriptionFormData,
 } from "../hooks/useSubscriptionForm";
 
 const SubscriptionFormPage = () => {
+  const [loading, setLoading] = useState(false);
   const onSubmit = async (data: SubscriptionFormData) => {
+    setLoading(true);
     try {
+      let userResult = null;
+      try {
+        userResult = await getUserByEmailUseCase.execute(data.email);
+      } catch (error: any) {
+        if (error.statusCode === 404) {
+          userResult = null;
+        } else {
+          alert("Error al consultar el usuario: " + error);
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (userResult && userResult.customerId) {
+        const statusResult = await getSubcriptionStatusUseCase.execute(
+          userResult.customerId
+        );
+        if (statusResult && statusResult.status === "active") {
+          localStorage.setItem("customerId", userResult.customerId);
+          window.location.href = "/dashboard";
+          return;
+        }
+      }
+
       const result = await createCheckoutSessionUseCase.execute({
         ...data,
-        priceId: "price_1RYJ7c2QypCxhenCgpYTvnag", // tu priceId real
+        priceId: "price_1RYJ7c2QypCxhenCgpYTvnag",
         successUrl: window.location.origin + "/dashboard",
         cancelUrl: window.location.origin + "/",
       });
 
-      // Guarda el customerId en localStorage para proteger rutas después
       localStorage.setItem("customerId", result.customerId);
-
-      // Redirige a Stripe Checkout
       window.location.href = result.url;
     } catch (error) {
-      // Aquí puedes mostrar un mensaje de error al usuario
-      console.error("Error al crear la sesión de Stripe:", error);
+      alert("Error en la petición: " + error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,9 +103,36 @@ const SubscriptionFormPage = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition flex items-center justify-center"
+            disabled={loading}
           >
-            Suscribirse por $50.00
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 mr-2 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  ></path>
+                </svg>
+                Procesando...
+              </>
+            ) : (
+              "Suscribirse por $50.00"
+            )}
           </button>
         </form>
       </div>
