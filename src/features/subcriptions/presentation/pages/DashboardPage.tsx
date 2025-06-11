@@ -81,6 +81,18 @@ const DashboardPage = () => {
               (subscription.currentPeriodEnd ?? 0) * 1000
             ).toLocaleString()}
           </div>
+          <div className="mb-2">
+            {subscription.status === "no_subscription" ? (
+              <button
+                onClick={handleLogout}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+              >
+                Suscribirse
+              </button>
+            ) : (
+              <></>
+            )}
+          </div>
         </div>
       </div>
     </div>
